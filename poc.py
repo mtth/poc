@@ -1,29 +1,16 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""Poc: Pig doc."""
+
+
 import re
+
 
 class Parser(object):
     """
     Parses a pig file into a PigLine objects
     """
-
-    outputs_pattern = re.compile('((?P<output>\w+)\s*=)?\s*(?P<operator>\w+)')
-
-    def _outputs(self, line):
-        matched = self.outputs_pattern.match(line).groupdict()
-        if matched['operator'].upper() == 'SPLIT':
-            return {'operator': 'SPLIT',
-                    'outputs': set(self._inputs('_SPLIT', line))}
-        else:
-            return {'operator': operator,
-                    'outputs': set([matched['output']])}
-
-    def _inputs(self, operator, line):
-        split = self.operator_splits[operator]
-        if split:
-            pattern = re.compile('(?P<alias>\w+)\s*(%s)' % (split, ), re.I)
-            return [match.groupdict()['alias'] for match in pattern.finditer(line)]
-        else:
-            pattern = re.compile('%s\s+(?P<alias>)' % (operator, ), re.I)
-            return pattern.search(line).groupdict['alias']
 
     operator_splits = {
         'DISTINCT': None,
@@ -46,10 +33,30 @@ class Parser(object):
         '_SPLIT': 'IF|OTHERWISE',
     }
 
-    def parse_line(line):
+    outputs_pattern = re.compile('((?P<output>\w+)\s*=)?\s*(?P<operator>\w+)')
+
+    def _outputs(self, line):
+        matched = self.outputs_pattern.match(line).groupdict()
+        if matched['operator'].upper() == 'SPLIT':
+            return {'operator': 'SPLIT',
+                    'outputs': set(self._inputs('_SPLIT', line))}
+        else:
+            return {'operator': matched['operator'].upper(),
+                    'outputs': set([matched['output']]) if matched['output'] else set()}
+
+    def _inputs(self, operator, line):
+        split = self.operator_splits[operator]
+        if split:
+            pattern = re.compile('(?P<alias>\w+)\s*(%s)' % (split, ), re.I)
+            return set(match.groupdict()['alias'] for match in pattern.finditer(line))
+        else:
+            pattern = re.compile('(%s)\s+(?P<alias>\w+)' % (operator, ), re.I)
+            return set([pattern.search(line).groupdict()['alias']])
+
+    def parse_line(self, line):
         outputs = self._outputs(line)
         matches = {
-            'inputs': set(self._inputs(outputs['operator'], line)),
+            'inputs': self._inputs(outputs['operator'], line),
             'outputs': outputs['outputs'],
             'operator': outputs['operator'],
         }
