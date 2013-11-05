@@ -75,6 +75,15 @@ class TestParser(object):
     }
     eq_(matched, truth)
 
+  def test_multijoin(self):
+    matched = self.parser.parse_line('foo = join this by fi, that by fie, them by fum')
+    truth = {
+      'operator': 'JOIN',
+      'outputs': set(['foo']),
+      'inputs': set(['this', 'that', 'them']),
+    }
+    eq_(matched, truth)
+
   def test_split_normal(self):
     matched = self.parser.parse_line('split foo into bar if this, bax if that')
     truth = {
