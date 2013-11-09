@@ -30,74 +30,17 @@ ASSERT alias BY expression [message];
 """
 
 
-from poc import *
 from nose.tools import eq_
+from poc.parser import *
 
 
 class TestParser(object):
 
+  path = 'poc/test/a.pig'
+
   def setup(self):
     self.parser = Parser()
 
-  def test_store(self):
-    matched = self.parser.parse_line("stOrE foo into 'some/path'")
-    truth = {
-      'operator': 'STORE',
-      'outputs': set(),
-      'inputs': set(['foo']),
-    }
-    eq_(matched, truth)
-
-  def test_distinct(self):
-    matched = self.parser.parse_line('foo = DISTINCT bar')
-    truth = {
-      'operator': 'DISTINCT',
-      'outputs': set(['foo']),
-      'inputs': set(['bar']),
-    }
-    eq_(matched, truth)
-
-  def test_filter(self):
-    matched = self.parser.parse_line('foo = filter bar by baz')
-    truth = {
-      'operator': 'FILTER',
-      'outputs': set(['foo']),
-      'inputs': set(['bar']),
-    }
-    eq_(matched, truth)
-
-  def test_join(self):
-    matched = self.parser.parse_line('foo = join this by fi, that by fie')
-    truth = {
-      'operator': 'JOIN',
-      'outputs': set(['foo']),
-      'inputs': set(['this', 'that']),
-    }
-    eq_(matched, truth)
-
-  def test_multijoin(self):
-    matched = self.parser.parse_line('foo = join this by fi, that by fie, them by fum')
-    truth = {
-      'operator': 'JOIN',
-      'outputs': set(['foo']),
-      'inputs': set(['this', 'that', 'them']),
-    }
-    eq_(matched, truth)
-
-  def test_split_normal(self):
-    matched = self.parser.parse_line('split foo into bar if this, bax if that')
-    truth = {
-      'operator': 'SPLIT',
-      'outputs': set(['bar', 'bax']),
-      'inputs': set(['foo']),
-    }
-    eq_(matched, truth)
-
-  def test_split_otherwise(self):
-    matched = self.parser.parse_line('split foo into bar if 1, bax otherwise')
-    truth = {
-      'operator': 'SPLIT',
-      'outputs': set(['bar', 'bax']),
-      'inputs': set(['foo']),
-    }
-    eq_(matched, truth)
+  def test_a(self):
+    operators = self.parser.parse(self.path)
+    eq_([o.name for o in operators], ['LOAD', 'FOREACH', 'GROUP', 'FOREACH', 'STORE'])
