@@ -179,8 +179,8 @@ class Flow(object):
   """
 
   def __init__(self, path):
-    self._available_inputs = {}
     self.operators = list(self._generate_operators(path))
+    self.path = path
 
   def __iter__(self):
     return iter(self.operators)
@@ -191,6 +191,7 @@ class Flow(object):
     :param path: path to pig script.
 
     """
+    available_inputs = {}
     state = InitialState()
     with open(path) as reader:
       generator = (
@@ -202,7 +203,7 @@ class Flow(object):
         if token == ';' and state.operator:
           try:
             parents = {
-              name: self._available_inputs[name]
+              name: available_inputs[name]
               for name in state.inputs
             }
           except KeyError as err:
@@ -214,7 +215,7 @@ class Flow(object):
             flow=self,
           )
           for name in state.outputs:
-            self._available_inputs[name] = operator
+            available_inputs[name] = operator
           yield operator
           state = InitialState()
         elif token != '\n':
