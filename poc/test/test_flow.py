@@ -31,16 +31,32 @@ ASSERT alias BY expression [message];
 
 
 from nose.tools import eq_
-from poc.parser import *
+from poc.flow import *
 
 
-class TestParser(object):
+class TestFlow(object):
 
   path = 'poc/test/a.pig'
 
   def setup(self):
-    self.parser = Parser()
+    self.flow = Flow(self.path)
 
-  def test_a(self):
-    operators = self.parser.parse(self.path)
-    eq_([o.name for o in operators], ['LOAD', 'FOREACH', 'GROUP', 'FOREACH', 'STORE'])
+  def test_names(self):
+    eq_(
+      [operator.name for operator in self.flow],
+      ['LOAD', 'FOREACH', 'GROUP', 'FOREACH', 'STORE']
+    )
+
+  def test_parents(self):
+    ops = self.flow.operators
+    eq_(ops[0].parents, {})
+    eq_(ops[1].parents, {'A': ops[0]})
+
+  def test_children(self):
+    ops = self.flow.operators
+    eq_(ops[4].children, {})
+    eq_(ops[0].children, {'A': ops[1]})
+    eq_(
+      [len(op.children) for op in ops],
+      [1, 1, 1, 1, 0],
+    )
